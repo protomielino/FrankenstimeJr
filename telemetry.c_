@@ -1,0 +1,224 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+//mmap
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
+
+typedef struct
+{
+    char *column1;
+    char *column2;
+    char *column3;
+    char *column4;
+    // Aggiungi altre colonne se necessario
+} csvRow;
+
+void save_to_binary_file_mmap(const char *filename, csvRow *rows, int num_rows)
+{
+    int fd = open(filename, O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        perror("Unable to open file for writing");
+        return;
+    }
+
+    // Calcola la dimensione totale del file
+    size_t total_size = sizeof(int); // per il numero di righe
+    for (int i = 0; i < num_rows; i++) {
+        total_size +=
+                sizeof(int) + strlen(rows[i].column1) +
+                sizeof(int) + strlen(rows[i].column2) +
+                sizeof(int) + strlen(rows[i].column3) +
+                sizeof(int) + strlen(rows[i].column4);
+    }
+
+    // Estendi il file alla dimensione calcolata
+    if (ftruncate(fd, total_size) == -1) {
+        perror("Unable to resize file");
+        close(fd);
+        return;
+    }
+
+    // Mappa il file nella memoria
+    void *map = mmap(NULL, total_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (map == MAP_FAILED) {
+        perror("mmap failed");
+        close(fd);
+        return;
+    }
+
+    // Scrivi il numero di righe
+    memcpy(map, &num_rows, sizeof(int));
+    char *ptr = (char *)map + sizeof(int);
+
+    // Scrivi ogni riga nel file
+    for (int i = 0; i < num_rows; i++) {
+        int len1 = strlen(rows[i].column1);
+        memcpy(ptr, &len1, sizeof(int));
+        ptr += sizeof(int);
+        memcpy(ptr, rows[i].column1, len1);
+        ptr += len1;
+
+        int len2 = strlen(rows[i].column2);
+        memcpy(ptr, &len2, sizeof(int));
+        ptr += sizeof(int);
+        memcpy(ptr, rows[i].column2, len2);
+        ptr += len2;
+
+        int len3 = strlen(rows[i].column3);
+        memcpy(ptr, &len3, sizeof(int));
+        ptr += sizeof(int);
+        memcpy(ptr, rows[i].column3, len3);
+        ptr += len3;
+
+        int len4 = strlen(rows[i].column4);
+        memcpy(ptr, &len4, sizeof(int));
+        ptr += sizeof(int);
+        memcpy(ptr, rows[i].column4, len4);
+        ptr += len4;
+}
+
+    // Unmap e chiudi il file
+    munmap(map, total_size);
+    close(fd);
+}
+
+void load_from_binary_file_mmap(const char *filename, csvRow **rows, int *num_rows)
+{
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1) {
+        perror("Unable to open file for reading");
+        return;
+    }
+
+    // Ottieni la dimensione del file
+    off_t file_size = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+
+    // Mappa il file nella memoria
+    void *map = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (map == MAP_FAILED) {
+        perror("mmap failed");
+        close(fd);
+        return;
+    }
+
+    // Leggi il numero di righe
+    memcpy(num_rows, map, sizeof(int));
+    *rows = NULL;
+
+    char *ptr = (char *)map + sizeof(int);
+
+    // Leggi ogni riga dal file
+    for (int i = 0; i < *num_rows; i++) {
+        csvRow row;
+
+        int len1;
+        memcpy(&len1, ptr, sizeof(int));
+        ptr += sizeof(int);
+        row.column1 = strndup(ptr, len1);
+        ptr += len1;
+
+        int len2;
+        memcpy(&len2, ptr, sizeof(int));
+        ptr += sizeof(int);
+        row.column2 = strndup(ptr, len2);
+        ptr += len2;
+
+        int len3;
+        memcpy(&len3, ptr, sizeof(int));
+        ptr += sizeof(int);
+        row.column3 = strndup(ptr, len3);
+        ptr += len3;
+
+        int len4;
+        memcpy(&len4, ptr, sizeof(int));
+        ptr += sizeof(int);
+        row.column4 = strndup(ptr, len4);
+        ptr += len4;
+
+        arrpush(*rows, row);
+    }
+
+    // Unmap e chiudi il file
+    munmap(map, file_size);
+    close(fd);
+}
+
+int main1()
+{
+    FILE *file = fopen("csv_log_car_0.csv", "r");
+    if (!file) {
+        perror("Unable to open file");
+        return 1;
+    }
+
+    csvRow *rows = NULL; // Array dinamico di CsvRow
+    char line[1024];
+
+    // Leggi il file riga per riga
+    while (fgets(line, sizeof(line), file)) {
+        csvRow row;
+        char *token = strtok(line, ",");
+
+        // Assumi che ci siano due colonne
+        row.column1 = strdup(token); // Copia il primo valore
+        token = strtok(NULL, ",");
+        row.column2 = strdup(token); // Copia il secondo valore
+        token = strtok(NULL, ",");
+        row.column3 = strdup(token); // Copia il terzo valore
+        token = strtok(NULL, ",\n");
+        row.column4 = strdup(token); // Copia il quarto valore
+
+        // Aggiungi la riga all'array dinamico
+        arrpush(rows, row);
+    }
+
+    fclose(file);
+
+    // Stampa i dati letti
+    for (int i = 0; i < arrlen(rows); i++) {
+        printf("Row %d: %s, %s, %s, %s\n", i,
+                rows[i].column1,
+                rows[i].column2,
+                rows[i].column3,
+                rows[i].column4);
+    }
+
+    // Salva i dati
+    save_to_binary_file_mmap("data.bin", rows, arrlen(rows));
+
+    // Libera l'array dinamico
+    for (int i = 0; i < arrlen(rows); i++) {
+        free(rows[i].column1); // Libera la memoria allocata
+        free(rows[i].column2); // Libera la memoria allocata
+        free(rows[i].column3); // Libera la memoria allocata
+        free(rows[i].column4); // Libera la memoria allocata
+    }
+    arrfree(rows);
+
+    // Carica i dati
+    csvRow *loaded_rows = NULL;
+    int num_loaded_rows = 0;
+    load_from_binary_file_mmap("data.bin", &loaded_rows, &num_loaded_rows);
+
+    // Stampa i dati caricati
+    for (int i = 0; i < num_loaded_rows; i++) {
+        printf("Loaded Row %d: %s, %s\n", i, loaded_rows[i].column1, loaded_rows[i].column2);
+    }
+
+    // Libera l'array dinamico
+    for (int i = 0; i < num_loaded_rows; i++) {
+        free(loaded_rows[i].column1); // Libera la memoria allocata
+        free(loaded_rows[i].column2); // Libera la memoria allocata
+        free(loaded_rows[i].column3); // Libera la memoria allocata
+        free(loaded_rows[i].column4); // Libera la memoria allocata
+    }
+    arrfree(loaded_rows);
+
+    return EXIT_SUCCESS;
+}
