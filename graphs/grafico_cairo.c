@@ -6,7 +6,8 @@
 #define HEIGHT 400
 
 // Funzione per disegnare la griglia
-void draw_grid(cairo_t *cr) {
+void draw_grid(cairo_t *cr)
+{
     cairo_set_line_width(cr, 0.5);
     cairo_set_source_rgb(cr, 0.9, 0.9, 0.9); // Colore grigio chiaro
 
@@ -26,7 +27,8 @@ void draw_grid(cairo_t *cr) {
 }
 
 // Funzione per disegnare il grafico
-void draw_graph(cairo_t *cr) {
+void draw_graph(cairo_t *cr)
+{
     cairo_set_line_width(cr, 2);
     cairo_set_source_rgb(cr, 0, 0, 1); // Colore blu
 
@@ -46,13 +48,15 @@ void draw_graph(cairo_t *cr) {
 }
 
 // Funzione di callback per il disegno
-static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data) {
+static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data)
+{
     draw_grid(cr);
     draw_graph(cr);
     return FALSE; // Restituisce FALSE per permettere ulteriori elaborazioni
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     gtk_init(&argc, &argv);
 
     GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);

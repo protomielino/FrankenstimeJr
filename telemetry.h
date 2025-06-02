@@ -9,6 +9,7 @@ typedef struct
 {
     size_t idxFirst;
     size_t idxLast;
+    size_t numIdxs;
 } idxRange;
 
 FILE* openFile(char *fname);

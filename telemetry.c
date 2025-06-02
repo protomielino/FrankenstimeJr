@@ -189,18 +189,18 @@ idxRange telemetry_getLapIdxRange(telemetry *tel, int lapN)
 
         ret.idxFirst = currLapIdx;
         ret.idxLast  = nextLapIdx - 1;
-//        for (size_t idx = currLapIdx; idx < nextLapIdx; idx++) {
-//            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
-//        }
     } else {
         size_t currLapIdx = tel->lapIndex[lapN];
         size_t lastDataIdx = arrlen(tel->data);
 
         ret.idxFirst = currLapIdx;
         ret.idxLast  = lastDataIdx;
-//        for (size_t idx = currLapIdx; idx < lastDataIdx; idx++) {
-//            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
-//        }
+    }
+    
+    ret.numIdxs =  ret.idxLast - ret.idxFirst;
+
+    if (lapN == 0) {
+        ret.numIdxs += 1;
     }
 
     return ret;
@@ -208,19 +208,10 @@ idxRange telemetry_getLapIdxRange(telemetry *tel, int lapN)
 
 void telemetry_dumpLap(telemetry *tel, int lapN)
 {
-    if (lapN < arrlen(tel->lapIndex) - 1) {
-        size_t currLapIdx = tel->lapIndex[lapN];
-        size_t nextLapIdx = tel->lapIndex[lapN + 1];
+    idxRange range = {};
+    range = telemetry_getLapIdxRange(tel, lapN);
 
-        for (size_t idx = currLapIdx; idx < nextLapIdx; idx++) {
-            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
-        }
-    } else {
-        size_t currLapIdx = tel->lapIndex[lapN];
-        size_t lastDataIdx = arrlen(tel->data);
-
-        for (size_t idx = currLapIdx; idx < lastDataIdx; idx++) {
-            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
-        }
+    for (size_t idx = range.idxFirst; idx <= range.idxLast; idx++) {
+        printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
     }
 }
