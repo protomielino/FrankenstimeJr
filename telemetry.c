@@ -24,52 +24,59 @@ void closeFile(FILE *f)
 }
 
 
-telemetry telemetry_ctor()
+telemetry* telemetry_ctor()
 {
-    telemetry tel = {};
-    arrpush(tel.data, ((telemetryData){ 0.0, 0.0 }));
+    telemetry *tel = calloc(1, sizeof(telemetry));
+
+    arrpush(tel->data, ((telemetryData){ 0.0, 0.0 }));
+    arrpush(tel->lapIndex, 0);
 
     return tel;
 }
 
-void telemetry_dtor(telemetry tel)
+void telemetry_dtor(telemetry *tel)
 {
-    if (arrlen(tel.data) > 0)
+    if (arrlen(tel->data) > 0)
     {
-        arrfree(tel.data);
+        arrfree(tel->data);
+        tel->data = NULL;
     }
-    if (arrlen(tel.lapIndex) > 0)
+    if (arrlen(tel->lapIndex) > 0)
     {
-        arrfree(tel.lapIndex);
+        arrfree(tel->lapIndex);
+        tel->lapIndex = NULL;
     }
+    
+    free(tel);
+    tel = NULL;
 }
 
-void telemetry_addDataPoint(telemetry tel, float time, float distance)
+void telemetry_addDataPoint(telemetry *tel, float time, float distance)
 {
     telemetryData newPoint = { time, distance };
-    arrpush(tel.data, newPoint); // Aggiunge il nuovo punto all'array dinamico
+    arrpush(tel->data, newPoint); // Aggiunge il nuovo punto all'array dinamico
 }
 
-void telemetry_addLapIndex(telemetry tel, int index)
+void telemetry_addLapIndex(telemetry *tel, size_t index)
 {
-    arrpush(tel.lapIndex, index); // Aggiunge l'indice di inizio giro all'array dinamico
+    arrpush(tel->lapIndex, index); // Aggiunge l'indice di inizio giro all'array dinamico
 }
 
-int telemetry_ricercaBinaria(telemetry tel, float tempoRicercato, int *indicePrecedente, int *indiceSuccessivo)
+int telemetry_ricercaBinaria(telemetry *tel, float tempoRicercato, size_t *indicePrecedente, size_t *indiceSuccessivo)
 {
     int inizio = 0;
-    int fine = arrlen(tel.data) - 1;
+    int fine = arrlen(tel->data) - 1;
 
     while (inizio <= fine) {
         int medio = inizio + (fine - inizio) / 2;
 
-        if (tel.data[medio].time == tempoRicercato) {
+        if (tel->data[medio].time == tempoRicercato) {
             *indicePrecedente = (medio > 0) ? medio - 1 : -1; // Indice precedente
-            *indiceSuccessivo = (medio < arrlen(tel.data) - 1) ? medio + 1 : -1; // Indice successivo
+            *indiceSuccessivo = (medio < arrlen(tel->data) - 1) ? medio + 1 : -1; // Indice successivo
             return medio; // Restituisce l'indice trovato
         }
 
-        if (tel.data[medio].time > tempoRicercato) {
+        if (tel->data[medio].time > tempoRicercato) {
             fine = medio - 1;
         } else {
             inizio = medio + 1;
@@ -83,30 +90,30 @@ int telemetry_ricercaBinaria(telemetry tel, float tempoRicercato, int *indicePre
     return -1; // Indica che non è stato trovato il tempo esatto
 }
 
-telemetry_risultatoDistanza telemetry_distanceAtTime(telemetry tel, float tempoRicercato)
+telemetry_binSearchResult telemetry_distanceAtTime(telemetry *tel, float tempoRicercato)
 {
-    telemetry_risultatoDistanza risultato = {0, -1, -1}; // Inizializza il risultato
+    telemetry_binSearchResult risultato = {0, -1, -1}; // Inizializza il risultato
 
-    if (arrlen(tel.data) == 0) {
+    if (arrlen(tel->data) == 0) {
         printf("Nessun dato disponibile.\n");
         return risultato; // Restituisce il risultato vuoto
     }
 
-    int indicePrecedente = -1;
-    int indiceSuccessivo = -1;
-    int indiceTrovato = telemetry_ricercaBinaria(tel, tempoRicercato, &indicePrecedente, &indiceSuccessivo);
+    size_t indicePrecedente = -1;
+    size_t indiceSuccessivo = -1;
+    size_t indiceTrovato = telemetry_ricercaBinaria(tel, tempoRicercato, &indicePrecedente, &indiceSuccessivo);
 
     if (indiceTrovato != -1) {
-        risultato.distanza = tel.data[indiceTrovato].distance; // Distanza trovata
+        risultato.distanza = tel->data[indiceTrovato].distance; // Distanza trovata
     } else {
         // Se non è stato trovato il tempo esatto, restituisci la distanza del punto più vicino
         if (indicePrecedente >= 0) {
-            risultato.distanza = tel.data[indicePrecedente].distance; // Distanza del punto più vicino a sinistra
+            risultato.distanza = tel->data[indicePrecedente].distance; // Distanza del punto più vicino a sinistra
         }
-        if (indiceSuccessivo < arrlen(tel.data)) {
+        if (indiceSuccessivo < arrlen(tel->data)) {
             // Confronta con il punto più vicino a destra
-            if (fabs(tel.data[indiceSuccessivo].time - tempoRicercato) < fabs(tel.data[indicePrecedente].time - tempoRicercato)) {
-                risultato.distanza = tel.data[indiceSuccessivo].distance;
+            if (fabs(tel->data[indiceSuccessivo].time - tempoRicercato) < fabs(tel->data[indicePrecedente].time - tempoRicercato)) {
+                risultato.distanza = tel->data[indiceSuccessivo].distance;
             }
         }
     }
@@ -117,49 +124,103 @@ telemetry_risultatoDistanza telemetry_distanceAtTime(telemetry tel, float tempoR
     return risultato; // Restituisce il risultato
 }
 
-void telemetry_loadFromCSV(telemetry tel, FILE *f)
+void telemetry_loadFromCSV(telemetry *tel, FILE *f)
 {
     char line[MAX_LINE_SIZE];
-    size_t idx = 0;
 
     // Leggi il file riga per riga e salva
     while (fgets(line, sizeof(line), f)) {
         static int prevLap = 0;
         int   _laps = 0;
-        float _curTime;
+        float _currTime = 0.0f;
         float _distRaced = 0.0f;
+        float _timeRaced = 0.0f;
         float _curLapTime = 0.0f;
         float _distFromStartLine = 0.0f;
         float _currLapTimeAtTrackPosition_corrected = 0.0f;
 
         sscanf(line, "%d, %f, %f, %f, %f, %f",
                 &_laps,
-                &_curTime,
+                &_currTime,
                 &_distRaced,
                 &_curLapTime,
                 &_distFromStartLine,
                 &_currLapTimeAtTrackPosition_corrected);
 
-        printf("%d, %f, %f, %f, %f, %f\n",
-                _laps,
-                _curTime,
-                _distRaced,
-                _curLapTime,
-                _distFromStartLine,
-                _currLapTimeAtTrackPosition_corrected);
-//        telemetry_addDataPoint(tel, time, dist);
-
-        // registra il tempo dal "GO" all'inizio del primo giro
-        if (_laps == 0) {
-//            tel.lap0Time = time;
-        }
-
-        // registra il l'indice iniziale del nuovo giro
+        // registra l'indice iniziale del nuovo giro
         if (prevLap < _laps) {
-            telemetry_addLapIndex(tel, arrlen(tel.data) - 1);
+            telemetry_addLapIndex(tel, arrlen(tel->data));
+
+            // registra il tempo dal "GO" all'inizio del primo giro
+            if (prevLap == 0) {
+                tel->lap0Time = _currTime - RCM_MAX_DT_SIMU;
+            }
+
             prevLap = _laps;
         }
 
-        idx++;
+        _timeRaced = _curLapTime + _currTime - tel->lap0Time;; // - tel->lap0Time;
+
+        // registra i dati della simulazione
+        telemetry_addDataPoint(tel, _timeRaced, _distRaced);
+
+//        printf("%f, %f\n", _timeRaced, _distRaced);
+//        printf("%f, %f\n", tel->data[arrlen(tel->data) - 1].time, tel->data[arrlen(tel->data) - 1].distance);
+
+//        printf("%d, %f, %f, %f, %f, %f, %f, %f\n",
+//                _laps,
+//                tel->lap0Time,
+//                _currTime,
+//                _timeRaced,
+//                _distRaced,
+//                _curLapTime,
+//                _distFromStartLine,
+//                _currLapTimeAtTrackPosition_corrected);
+    }
+}
+
+idxRange telemetry_getLapIdxRange(telemetry *tel, int lapN)
+{
+    idxRange ret = {};
+
+    if (lapN < arrlen(tel->lapIndex) - 1) {
+        size_t currLapIdx = tel->lapIndex[lapN];
+        size_t nextLapIdx = tel->lapIndex[lapN + 1];
+
+        ret.idxFirst = currLapIdx;
+        ret.idxLast  = nextLapIdx - 1;
+//        for (size_t idx = currLapIdx; idx < nextLapIdx; idx++) {
+//            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
+//        }
+    } else {
+        size_t currLapIdx = tel->lapIndex[lapN];
+        size_t lastDataIdx = arrlen(tel->data);
+
+        ret.idxFirst = currLapIdx;
+        ret.idxLast  = lastDataIdx;
+//        for (size_t idx = currLapIdx; idx < lastDataIdx; idx++) {
+//            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
+//        }
+    }
+
+    return ret;
+}
+
+void telemetry_dumpLap(telemetry *tel, int lapN)
+{
+    if (lapN < arrlen(tel->lapIndex) - 1) {
+        size_t currLapIdx = tel->lapIndex[lapN];
+        size_t nextLapIdx = tel->lapIndex[lapN + 1];
+
+        for (size_t idx = currLapIdx; idx < nextLapIdx; idx++) {
+            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
+        }
+    } else {
+        size_t currLapIdx = tel->lapIndex[lapN];
+        size_t lastDataIdx = arrlen(tel->data);
+
+        for (size_t idx = currLapIdx; idx < lastDataIdx; idx++) {
+            printf("%ld, %f, %f\n", idx, tel->data[idx].time, tel->data[idx].distance);
+        }
     }
 }
