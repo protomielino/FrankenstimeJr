@@ -33,21 +33,34 @@ typedef struct
 // Funzione per disegnare la griglia
 static void draw_grid(cairo_t *cr, AppData *data)
 {
-    cairo_set_source_rgb(cr, 0.0, 0.8, 0.8); // Colore grigio per la griglia
-    cairo_set_line_width(cr, 1.0);
-
+    cairo_set_source_rgb(cr, 0.8, 0.8, 0.8); // Colore grigio per la griglia
+    cairo_set_line_width(cr, 0.55);
     // Disegna linee orizzontali
     for (int i = -10; i <= 10; i++) {
         cairo_move_to(cr, -(10 * data->scale) + data->offset_x, (i * data->scale) + data->offset_y);
         cairo_line_to(cr, (10 * data->scale) + data->offset_x, (i * data->scale) + data->offset_y);
     }
+    cairo_stroke(cr);
 
+    cairo_set_source_rgb(cr, 0.8, 0.0, 0.0); // Colore rosso per asse orizzontale
+    cairo_set_line_width(cr, 1.0);
+    cairo_move_to(cr, -(10 * data->scale) + data->offset_x, (0 * data->scale) + data->offset_y);
+    cairo_line_to(cr, (10 * data->scale) + data->offset_x, (0 * data->scale) + data->offset_y);
+    cairo_stroke(cr);
+
+    cairo_set_source_rgb(cr, 0.8, 0.8, 0.8); // Colore grigio per la griglia
+    cairo_set_line_width(cr, 0.25);
     // Disegna linee verticali
     for (int i = -10; i <= 10; i++) {
         cairo_move_to(cr, (i * data->scale) + data->offset_x, -(10 * data->scale) + data->offset_y);
         cairo_line_to(cr, (i * data->scale) + data->offset_x, (10 * data->scale) + data->offset_y);
     }
+    cairo_stroke(cr);
 
+    cairo_set_source_rgb(cr, 0.0, 0.8, 0.0); // Colore verde per asse verticale
+    cairo_set_line_width(cr, 1.0);
+    cairo_move_to(cr, (0 * data->scale) + data->offset_x, -(10 * data->scale) + data->offset_y);
+    cairo_line_to(cr, (0 * data->scale) + data->offset_x, (10 * data->scale) + data->offset_y);
     cairo_stroke(cr);
 }
 
@@ -67,8 +80,15 @@ void draw_graph(cairo_t *cr, AppData *data)
 
     // Inizia a disegnare il grafico
     cairo_move_to(cr, (x[0] * (WIDTH / (MAX_POINTS-1)) * zoom + data->offset_x), (1 - (y[0] + 1) / 2) * HEIGHT * zoom + data->offset_y);
+
+    cairo_move_to(cr, -(10 * data->scale) + data->offset_x, (0 * data->scale) + data->offset_y);
+    cairo_move_to(cr, (0 * data->scale) + data->offset_x, -(10 * data->scale) + data->offset_y);
+
     for (int i = 1; i < MAX_POINTS; i++) {
         cairo_line_to(cr, (x[i] * (WIDTH / MAX_POINTS-1) * zoom + data->offset_x), (1 - (y[i] + 1) / 2) * HEIGHT * zoom + data->offset_y);
+
+        cairo_line_to(cr, (10 * data->scale) + data->offset_x, (0 * data->scale) + data->offset_y);
+        cairo_line_to(cr, (0 * data->scale) + data->offset_x, (10 * data->scale) + data->offset_y);
     }
     cairo_stroke(cr);
 }
@@ -181,19 +201,19 @@ static gboolean on_key_release_event(GtkWidget *widget, GdkEventKey *event)
 // Funzione per gestire lo zoom
 static gboolean on_scroll_event(GtkWidget *widget, GdkEventScroll *event, AppData *data)
 {
-    double zoom_factor = 1.1; // Fattore di zoom
+    double zoom_speed_factor = 1.05; // Fattore di zoom
     double mouse_x = event->x;
     double mouse_y = event->y;
 
     if (event->direction == GDK_SCROLL_UP) {
-        data->scale *= zoom_factor;
+        data->scale *= zoom_speed_factor;
     } else if (event->direction == GDK_SCROLL_DOWN) {
-        data->scale /= zoom_factor;
+        data->scale /= zoom_speed_factor;
     }
 
     // Calcola l'offset in base alla posizione del mouse
-    data->offset_x = mouse_x - (mouse_x - data->offset_x) * (data->scale / (data->scale * zoom_factor));
-    data->offset_y = mouse_y - (mouse_y - data->offset_y) * (data->scale / (data->scale * zoom_factor));
+    data->offset_x = mouse_x - (mouse_x - data->offset_x) * (data->scale / (data->scale * zoom_speed_factor));
+    data->offset_y = mouse_y - (mouse_y - data->offset_y) * (data->scale / (data->scale * zoom_speed_factor));
 
 //    printf("%f, %f\n", data->offset_x, data->offset_y);
 
