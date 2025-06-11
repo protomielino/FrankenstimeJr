@@ -27,6 +27,7 @@ typedef struct
     float           lap0Time;
     float           lapAvgSpeed;
     float           raceAvgSpeed;
+    size_t          num_samples;
 } telemetry;
 
 typedef struct

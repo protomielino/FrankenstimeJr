@@ -177,6 +177,8 @@ void telemetry_loadFromCSV(telemetry *tel, FILE *f)
 //                _distFromStartLine,
 //                _currLapTimeAtTrackPosition_corrected);
     }
+
+    tel->num_samples = arrlen(tel->data);
 }
 
 idxRange telemetry_getLapIdxRange(telemetry *tel, int lapN)

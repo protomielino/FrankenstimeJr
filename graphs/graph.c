@@ -233,6 +233,15 @@ static gboolean on_scroll_event(GtkWidget *widget, GdkEventScroll *event, AppDat
     return TRUE;
 }
 
+void on_scale_horizontal_value_changed()
+{
+
+}
+void on_scale_vertical_value_changed()
+{
+
+}
+
 int main(int argc, char *argv[])
 {
     gtk_init(&argc, &argv);
@@ -255,6 +264,11 @@ int main(int argc, char *argv[])
     g_signal_connect(G_OBJECT(drawing_area), "key-press-event", G_CALLBACK(on_key_press_event), NULL);
     g_signal_connect(G_OBJECT(drawing_area), "key-release-event", G_CALLBACK(on_key_release_event), NULL);
     g_signal_connect(G_OBJECT(drawing_area), "scroll-event", G_CALLBACK(on_scroll_event), &data);
+
+    GtkWidget *scale_horizontal = gtk_scale_new();
+    gtk_container_add(GTK_CONTAINER(window), scale_horizontal);
+    g_signal_connect(G_OBJECT(scale_horizontal), "scale-value-changed", G_CALLBACK(on_scale_horizontal_value_changed), &data);
+    g_signal_connect(G_OBJECT(scale_vertical), "scale-value-changed", G_CALLBACK(on_scale_vertical_value_changed), &data);
 
     // Abilita gli eventi del mouse
     gtk_widget_set_events(drawing_area, gtk_widget_get_events(drawing_area) |
