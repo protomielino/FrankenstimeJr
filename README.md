@@ -1,10 +1,14 @@
 # FrankenstimeJr
 backup
 
-compile with:
+needed libraries:
+```
+  stb_ds.h (dynamic arrays)
+  GTK 3 (windows and such)
+  cairo (raw graphic)
+  <dependencies> (depending on the system)
+```
 
-`gcc -o graph graph.c $(pkg-config --cflags --libs gtk+-3.0 cairo) -lm`
+compile with: `gcc -o telemetry main.c telemetry.c $(pkg-config --cflags --libs gtk+-3.0 cairo) -lm`
 
-and
-
-`gcc -o telemetry telemetry.c $(pkg-config --cflags --libs gtk+-3.0 cairo) -lm`
+run with: `./telemetry`
