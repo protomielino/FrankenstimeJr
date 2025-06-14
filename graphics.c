@@ -3,20 +3,39 @@
 // Funzione per disegnare la griglia
 static void draw_grid(cairo_t *cr, AppData *data)
 {
+    double grid_border_left, grid_border_right;
+    double grid_border_top, grid_border_bottom;
+    double grid_min_x, grid_min_y;
+    double grid_max_x, grid_max_y;
+
+    grid_border_left = 150;
+    grid_border_top = 150;
+    grid_min_x    = (grid_border_left - data->pan_x) / data->scale_x;
+    grid_min_y    = (data->drawing_area_height - grid_border_top - data->pan_y) / data->scale_y; // Inverti Y
+    data->grid_min_x = grid_min_x;
+    data->grid_min_y = grid_min_y;
+
+    grid_border_right = data->drawing_area_width - 150;
+    grid_border_bottom = data->drawing_area_height - 150;
+    grid_max_x    = (grid_border_right - data->pan_x) / data->scale_x;
+    grid_max_y    = (data->drawing_area_height - grid_border_bottom - data->pan_y) / data->scale_y; // Inverti Y
+    data->grid_max_x = grid_max_x;
+    data->grid_max_y = grid_max_y;
+
     // griglia colore grigio
     cairo_set_source_rgb(cr, 0.8, 0.8, 0.8);
     cairo_set_line_width(cr, 0.5);
 
     // Disegna linee orizzontali
-    for (int i = data->grid_min_y; i <= data->grid_max_y; i++) {
-        cairo_move_to(cr, (data->grid_min_x * data->scale_x) + data->offset_x, FLIP_VERTICAL((i * data->scale_y) + data->offset_y));
-        cairo_line_to(cr, (data->grid_max_x * data->scale_x) + data->offset_x, FLIP_VERTICAL((i * data->scale_y) + data->offset_y));
+    for (int i = data->grid_max_y; i <= data->grid_min_y; i++) {
+        cairo_move_to(cr, (data->grid_min_x * data->scale_x) + data->pan_x, FLIP_VERTICAL((i * data->scale_y) + data->pan_y));
+        cairo_line_to(cr, (data->grid_max_x * data->scale_x) + data->pan_x, FLIP_VERTICAL((i * data->scale_y) + data->pan_y));
     }
 
     // Disegna linee verticali
     for (int i = data->grid_min_x; i <= data->grid_max_x; i++) {
-        cairo_move_to(cr, (i * data->scale_x) + data->offset_x, FLIP_VERTICAL((data->grid_min_y * data->scale_y) + data->offset_y));
-        cairo_line_to(cr, (i * data->scale_x) + data->offset_x, FLIP_VERTICAL((data->grid_max_y * data->scale_y) + data->offset_y));
+        cairo_move_to(cr, (i * data->scale_x) + data->pan_x, FLIP_VERTICAL((data->grid_min_y * data->scale_y) + data->pan_y));
+        cairo_line_to(cr, (i * data->scale_x) + data->pan_x, FLIP_VERTICAL((data->grid_max_y * data->scale_y) + data->pan_y));
     }
     cairo_stroke(cr);
 
@@ -24,8 +43,8 @@ static void draw_grid(cairo_t *cr, AppData *data)
     cairo_set_font_size(cr, 16);
 
     // Disegna il valore della coordinata verticale
-    for (int i = data->grid_min_y; i <= data->grid_max_y; i++) {
-        double y = (i * data->scale_y) + data->offset_y;
+    for (int i = data->grid_max_y; i <= data->grid_min_y; i++) {
+        double y = (i * data->scale_y) + data->pan_y;
 
         cairo_set_source_rgba(cr, 0.2, 0.8, 0.2, 0.75); // verde
         cairo_move_to(cr, 10, FLIP_VERTICAL(y+5));
@@ -36,7 +55,7 @@ static void draw_grid(cairo_t *cr, AppData *data)
 
     // Disegna il valore della coordinata orizzontale
     for (int i = data->grid_min_x; i <= data->grid_max_x; i++) {
-        double x = (i * data->scale_x) + data->offset_x;
+        double x = (i * data->scale_x) + data->pan_x;
 
         char text[10];
         snprintf(text, sizeof(text), "%d", i);
@@ -67,15 +86,15 @@ static void draw_grid(cairo_t *cr, AppData *data)
     // asse orizzontale rosso
     cairo_set_source_rgb(cr, 0.8, 0.0, 0.0);
     cairo_set_line_width(cr, 2.0);
-    cairo_move_to(cr, (data->grid_min_x * data->scale_x) + data->offset_x, FLIP_VERTICAL((0 * data->scale_y) + data->offset_y));
-    cairo_line_to(cr, (data->grid_max_x * data->scale_x) + data->offset_x, FLIP_VERTICAL((0 * data->scale_y) + data->offset_y));
+    cairo_move_to(cr, (data->grid_min_x * data->scale_x) + data->pan_x, FLIP_VERTICAL((0 * data->scale_y) + data->pan_y));
+    cairo_line_to(cr, (data->grid_max_x * data->scale_x) + data->pan_x, FLIP_VERTICAL((0 * data->scale_y) + data->pan_y));
     cairo_stroke(cr);
 
     // asse verticale verde
     cairo_set_source_rgb(cr, 0.0, 0.8, 0.0);
     cairo_set_line_width(cr, 2.0);
-    cairo_move_to(cr, (0 * data->scale_x) + data->offset_x, FLIP_VERTICAL((data->grid_min_y * data->scale_y) + data->offset_y));
-    cairo_line_to(cr, (0 * data->scale_x) + data->offset_x, FLIP_VERTICAL((data->grid_max_y * data->scale_y) + data->offset_y));
+    cairo_move_to(cr, (0 * data->scale_x) + data->pan_x, FLIP_VERTICAL((data->grid_min_y * data->scale_y) + data->pan_y));
+    cairo_line_to(cr, (0 * data->scale_x) + data->pan_x, FLIP_VERTICAL((data->grid_max_y * data->scale_y) + data->pan_y));
     cairo_stroke(cr);
 }
 
@@ -95,21 +114,21 @@ static void draw_graph(cairo_t *cr, AppData *data)
         td0distance < data->drawing_area_height)
     {
         cairo_move_to(cr,
-                (td0time * data->scale_x) + data->offset_x,
-                FLIP_VERTICAL((td0distance * data->scale_y) + data->offset_y));
+                (td0time * data->scale_x) + data->pan_x,
+                FLIP_VERTICAL((td0distance * data->scale_y) + data->pan_y));
     }
 
     for (size_t i = 2; i < data->tel->num_samples; i++) {
         float tdItime = td[i].time;
         float tdIdistance = td[i].distance;
-        if (tdItime     * data->scale_x + data->offset_x > 0 &&
-            tdItime     * data->scale_x + data->offset_x < data->drawing_area_width &&
-            tdIdistance * data->scale_y + data->offset_y > 0 &&
-            tdIdistance * data->scale_y + data->offset_y < data->drawing_area_height)
+        if (tdItime     * data->scale_x + data->pan_x > 0 &&
+            tdItime     * data->scale_x + data->pan_x < data->drawing_area_width &&
+            tdIdistance * data->scale_y + data->pan_y > 0 &&
+            tdIdistance * data->scale_y + data->pan_y < data->drawing_area_height)
         {
             cairo_line_to(cr,
-                    tdItime * data->scale_x + data->offset_x,
-                    FLIP_VERTICAL(tdIdistance * data->scale_y + data->offset_y));
+                    tdItime * data->scale_x + data->pan_x,
+                    FLIP_VERTICAL(tdIdistance * data->scale_y + data->pan_y));
         }
     }
     cairo_stroke(cr);
@@ -141,7 +160,17 @@ gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, AppData *data)
 
     cairo_set_source_rgb(cr, 1, 1, 1);
 
-    return TRUE; // Restituisce FALSE per permettere ulteriori elaborazioni
+    double x    = (data->mouse_pos_X - data->pan_x) / data->scale_x;
+    double y    = (data->drawing_area_height - data->mouse_pos_Y - data->pan_y) / data->scale_y; // Inverti Y
+    double zoom_x = data->scale_x;
+    double zoom_y = data->scale_y;
+
+    gtk_label_set_text (GTK_LABEL(data->widgets.label),
+            g_strdup_printf("time:%.4f - distance:%.4f   --   zoom x:%.3f - zoom y:%.3f",
+                x, y,
+                zoom_x, zoom_y));
+
+    return FALSE; // Restituisce FALSE per permettere ulteriori elaborazioni
 }
 
 // Funzione per gestire il movimento del mouse
@@ -149,8 +178,8 @@ gboolean on_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, AppDat
 {
     if (data->panning && (event->state & GDK_BUTTON1_MASK)) {
         // Aggiorna l'offset per il pan
-        data->offset_x = event->x - data->offset_click_X;
-        data->offset_y = FLIP_VERTICAL(event->y) + FLIP_VERTICAL(data->offset_click_Y);
+        data->pan_x = event->x - data->offset_click_X;
+        data->pan_y = FLIP_VERTICAL(event->y) + FLIP_VERTICAL(data->offset_click_Y);
         gtk_widget_queue_draw(widget);
     }
 
@@ -163,13 +192,17 @@ gboolean on_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, AppDat
     data->mouse_pos_X = event->x;
     data->mouse_pos_Y = event->y;
 
-    double grid_x = (event->x - data->offset_x) / data->scale_x;
-    double grid_y = (data->drawing_area_height - event->y - data->offset_y) / data->scale_y; // Inverti Y
+    double x    = (event->x - data->pan_x) / data->scale_x;
+    double y    = (data->drawing_area_height - event->y - data->pan_y) / data->scale_y; // Inverti Y
+    double zoom_x = data->scale_x;
+    double zoom_y = data->scale_y;
 
     gtk_label_set_text (GTK_LABEL(data->widgets.label),
-            g_strdup_printf("time:%.4f\tdistance:%.4f", grid_x, grid_y));
+            g_strdup_printf("time:%.4f - distance:%.4f   --   zoom x:%.3f - zoom y:%.3f",
+                x, y,
+                zoom_x, zoom_y));
 
-    return TRUE;
+    return FALSE;
 }
 
 // Funzione per gestire il pan
@@ -207,8 +240,8 @@ gboolean on_button_press_event(GtkWidget *widget, GdkEventButton *event, AppData
     if (data->selecting && (event->button == GDK_BUTTON_PRIMARY)) {
         data->selecting = TRUE;
 
-        data->select_start_x = (data->scale_x - data->mouse_pos_X + data->offset_x) / data->scale_x;
-        data->select_start_y = (data->scale_y - data->mouse_pos_Y + data->offset_y) / data->scale_y;
+        data->select_start_x = (data->scale_x - data->mouse_pos_X + data->pan_x) / data->scale_x;
+        data->select_start_y = (data->scale_y - data->mouse_pos_Y + data->pan_y) / data->scale_y;
         data->select_start_x = event->x;
         data->select_start_y = event->y;
         data->select_end_x = event->x;
@@ -217,10 +250,10 @@ gboolean on_button_press_event(GtkWidget *widget, GdkEventButton *event, AppData
         gtk_widget_queue_draw(widget);
     }
     // Inizia il pan
-    data->offset_click_X = event->x - data->offset_x;
-    data->offset_click_Y = FLIP_VERTICAL(event->y) + FLIP_VERTICAL(data->offset_y);
+    data->offset_click_X = event->x - data->pan_x;
+    data->offset_click_Y = FLIP_VERTICAL(event->y) + FLIP_VERTICAL(data->pan_y);
 
-    return TRUE;
+    return FALSE;
 }
 
 // Funzione per gestire il rilascio del pulsante del mouse
@@ -234,7 +267,8 @@ gboolean on_button_release_event(GtkWidget *widget, GdkEventButton *event, AppDa
         // Ad esempio, calcolare quali dati sono stati selezionati
         gtk_widget_queue_draw(widget); // Ridisegna il widget
     }
-    return TRUE;
+
+    return FALSE;
 }
 
 // Funzione per gestire il pan
@@ -243,31 +277,38 @@ gboolean on_key_press_event(GtkWidget *widget, GdkEventKey *event, AppData *data
     if (event->keyval == GDK_KEY_space) {
         data->space_pressed = TRUE;
     }
+    if (event->keyval == GDK_KEY_Control_L) {
+        data->ctrl_pressed = TRUE;
+    }
+    if (event->keyval == GDK_KEY_Shift_L) {
+        data->shift_pressed = TRUE;
+    }
 
-//    if (event->hardware_keycode == GDK_KEY_space) {
+//    if (event->keyval == GDK_KEY_space) {
 //        data->panning = TRUE;
 //    }
-//    if (event->hardware_keycode == GDK_KEY_Control_L) {
+//    if (event->keyval == GDK_KEY_Control_L) {
 //        data->zooming = TRUE;
 //    }
-//    if (event->hardware_keycode == GDK_KEY_Shift_L) {
+//    if (event->keyval == GDK_KEY_Shift_L) {
 //        data->selecting = TRUE;
 //    }
-    //    if (event->button == GDK_BUTTON_PRIMARY) {
-    //        selecting = TRUE;
-    //        select_start_x = event->x;
-    //        select_start_y = event->y;
-    //        select_end_x = event->x;
-    //        select_end_y = event->y;
-    //
-    //#if 0
-    //        // Inizia il pan
-    //        offset_click_X = event->x - pan_X;
-    //        offset_click_Y = event->y - pan_Y;
-    //#endif
-    //        gtk_widget_queue_draw(widget);
-    //    }
-    return TRUE;
+//    if (event->button == GDK_BUTTON_PRIMARY) {
+//        selecting = TRUE;
+//        select_start_x = event->x;
+//        select_start_y = event->y;
+//        select_end_x = event->x;
+//        select_end_y = event->y;
+//
+//#if 0
+//        // Inizia il pan
+//        offset_click_X = event->x - pan_X;
+//        offset_click_Y = event->y - pan_Y;
+//#endif
+//        gtk_widget_queue_draw(widget);
+//    }
+
+    return FALSE;
 }
 
 // Funzione per gestire il rilascio del pulsante del mouse
@@ -275,6 +316,12 @@ gboolean on_key_release_event(GtkWidget *widget, GdkEventKey *event, AppData *da
 {
     if (event->keyval == GDK_KEY_space) {
         data->space_pressed = FALSE;
+    }
+    if (event->keyval == GDK_KEY_Control_L) {
+        data->ctrl_pressed = FALSE;
+    }
+    if (event->keyval == GDK_KEY_Shift_L) {
+        data->shift_pressed = FALSE;
     }
 
     data->panning = FALSE;
@@ -286,7 +333,7 @@ gboolean on_key_release_event(GtkWidget *widget, GdkEventKey *event, AppData *da
 //        // Ad esempio, calcolare quali dati sono stati selezionati
 //        gtk_widget_queue_draw(widget); // Ridisegna il widget
 //    }
-    return TRUE;
+    return FALSE;
 }
 
 gboolean on_scroll_event(GtkWidget *widget, GdkEventScroll *event, AppData *data)
@@ -296,22 +343,38 @@ gboolean on_scroll_event(GtkWidget *widget, GdkEventScroll *event, AppData *data
     double mouse_y = event->y;
 
     // Calcola le coordinate della griglia prima dello zoom
-    double grid_x = (mouse_x - data->offset_x) / data->scale_x;
-    double grid_y = (data->drawing_area_height - mouse_y - data->offset_y) / data->scale_y; // Inverti Y
+    double grid_x = (mouse_x - data->pan_x) / data->scale_x;
+    double grid_y = (data->drawing_area_height - mouse_y - data->pan_y) / data->scale_y; // Inverti Y
 
     if (event->direction == GDK_SCROLL_UP) {
-        data->scale_x *= zoom_factor;
-        data->scale_y *= zoom_factor;
+        if (!data->shift_pressed && !data->ctrl_pressed) {
+            data->scale_x *= zoom_factor;
+            data->scale_y *= zoom_factor;
+        }
+        if (data->shift_pressed) {
+            data->scale_x *= zoom_factor;
+        }
+        if (data->ctrl_pressed) {
+            data->scale_y *= zoom_factor;
+        }
     } else if (event->direction == GDK_SCROLL_DOWN) {
-        data->scale_x /= zoom_factor;
-        data->scale_y /= zoom_factor;
+        if (!data->shift_pressed && !data->ctrl_pressed) {
+            data->scale_x /= zoom_factor;
+            data->scale_y /= zoom_factor;
+        }
+        if (data->shift_pressed) {
+            data->scale_x /= zoom_factor;
+        }
+        if (data->ctrl_pressed) {
+            data->scale_y /= zoom_factor;
+        }
     }
 
     // Calcola il nuovo offset in modo che il punto sotto il mouse rimanga fisso
-    data->offset_x = mouse_x - grid_x * data->scale_x;
-    data->offset_y = (data->drawing_area_height - mouse_y) - grid_y * data->scale_y;
+    data->pan_x = mouse_x - grid_x * data->scale_x;
+    data->pan_y = (data->drawing_area_height - mouse_y) - grid_y * data->scale_y;
 
     gtk_widget_queue_draw(widget); // Richiesta di ridisegno
 
-    return TRUE;
+    return FALSE;
 }

@@ -26,8 +26,8 @@ typedef struct
 
 typedef struct
 {
-    double offset_x;
-    double offset_y;
+    double pan_x;
+    double pan_y;
     double scale_x;
     double scale_y;
 
@@ -46,6 +46,8 @@ typedef struct
     gboolean zooming;
     gboolean selecting;
     gboolean space_pressed;
+    gboolean ctrl_pressed;
+    gboolean shift_pressed;
 
     int drawing_area_width;
     int drawing_area_height;
@@ -67,8 +69,6 @@ typedef struct
 } point2d;
 
 
-//void draw_grid(cairo_t *cr, AppData *data);
-//void draw_graph(cairo_t *cr, AppData *data);
 gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, AppData *data);
 gboolean on_motion_notify_event(GtkWidget *widget, GdkEventMotion *event, AppData *data);
 gboolean on_button_press_event(GtkWidget *widget, GdkEventButton *event, AppData *data);

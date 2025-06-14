@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
     data.drawing_area_height = HEIGHT;
     data.scale_x = 1.0;
     data.scale_y = 1.0;
-    data.offset_x = data.drawing_area_width/2.0;
-    data.offset_y = data.drawing_area_height/2.0; // Inizializza i dati
+    data.pan_x = data.drawing_area_width/2.0;
+    data.pan_y = data.drawing_area_height/2.0; // Inizializza i dati
     int tel_num_samples = tel->num_samples;
     data.grid_min_x = tel->data[1].time;
     data.grid_max_x = tel->data[tel_num_samples-1].time;;
