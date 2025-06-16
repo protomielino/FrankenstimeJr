@@ -2,40 +2,143 @@
 <!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
+  <object class="GtkAdjustment" id="adjustment_spin_lap">
+    <property name="upper">2</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">10</property>
+  </object>
+  <object class="GtkFileFilter" id="filefilter1">
+    <patterns>
+      <pattern>*.csv</pattern>
+    </patterns>
+  </object>
+  <object class="GtkListStore" id="list_store_cars">
+    <columns>
+      <!-- column-name car_name -->
+      <column type="gchararray"/>
+      <!-- column-name telemetry -->
+      <column type="gpointer"/>
+    </columns>
+  </object>
   <object class="GtkWindow" id="window">
     <property name="can-focus">False</property>
     <property name="window-position">center</property>
+    <signal name="check-resize" handler="on_window_check_resize" swapped="no"/>
     <child>
       <object class="GtkBox" id="box">
         <property name="visible">True</property>
         <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkLabel" id="label">
+          <object class="GtkFixed" id="fixed">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="label" translatable="yes">x: y:</property>
-            <attributes>
-              <attribute name="font-desc" value="DejaVu Sans Mono Bold 10"/>
-            </attributes>
+            <property name="vexpand">True</property>
+            <child>
+              <object class="GtkDrawingArea" id="drawing_area">
+                <property name="width-request">100</property>
+                <property name="height-request">80</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label_coords">
+                <property name="width-request">100</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <attributes>
+                  <attribute name="font-desc" value="Ubuntu Sans Mono 12"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="x">299</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label_zoom">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">end</property>
+                <property name="valign">start</property>
+                <attributes>
+                  <attribute name="font-desc" value="Ubuntu Sans Mono 12"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="x">392</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="spin_lap">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="tooltip-text" translatable="yes">lap</property>
+                <property name="has-frame">False</property>
+                <property name="text" translatable="yes">0</property>
+                <property name="input-purpose">number</property>
+                <property name="adjustment">adjustment_spin_lap</property>
+                <property name="numeric">True</property>
+              </object>
+              <packing>
+                <property name="y">28</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFileChooserButton" id="file_chooser_button">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="create-folders">False</property>
+                <property name="filter">filefilter1</property>
+                <property name="preview-widget-active">False</property>
+                <property name="use-preview-label">False</property>
+                <property name="title" translatable="yes"/>
+                <signal name="file-set" handler="on_file_chooser_button_file_set" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="button_remove">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
+                <property name="relief">none</property>
+                <signal name="clicked" handler="on_button_remove_clicked" swapped="no"/>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="stock">gtk-delete</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="x">231</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="combo_box_cars">
+                <property name="width-request">150</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="model">list_store_cars</property>
+                <property name="has-frame">False</property>
+                <property name="has-entry">True</property>
+                <property name="entry-text-column">0</property>
+                <child internal-child="entry">
+                  <object class="GtkEntry">
+                    <property name="can-focus">False</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="x">44</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
             <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkDrawingArea" id="drawing_area">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="hexpand">True</property>
-            <property name="vexpand">True</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">1</property>
           </packing>
         </child>
       </object>

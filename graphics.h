@@ -19,9 +19,18 @@
 typedef struct
 {
     GtkWidget *window;
+    GtkWidget *box;
+    GtkWidget *fixed;
     GtkWidget *drawing_area;
-    GtkWidget *label;
-
+    GtkWidget *label_coords;
+    GtkWidget *label_zoom;
+    GtkWidget *spin_lap;
+    GtkWidget *file_chooser_button;
+    GtkWidget *combo_box_cars;
+    GtkWidget *button_remove;
+    
+    GtkListStore *list_store_cars;
+    GtkAdjustment *adjustment_spin_lap;
 } AppWidgets;
 
 typedef struct
@@ -58,6 +67,8 @@ typedef struct
     float grid_spacing_x;
     float grid_spacing_y;
 
+    int spin_lap_val;
+
     AppWidgets widgets;
 
     telemetry *tel;
@@ -76,5 +87,9 @@ gboolean on_button_release_event(GtkWidget *widget, GdkEventButton *event, AppDa
 gboolean on_key_press_event(GtkWidget *widget, GdkEventKey *event, AppData *data);
 gboolean on_key_release_event(GtkWidget *widget, GdkEventKey *event, AppData *data);
 gboolean on_scroll_event(GtkWidget *widget, GdkEventScroll *event, AppData *data);
+gboolean on_window_check_resize(GtkContainer *window, AppData *data);
+gboolean on_spin_lap_value_changed(GtkWidget *widget, GdkEvent *event, AppData *data);
+gboolean on_button_remove_clicked(GtkWidget *widget, AppData *data);
+gboolean on_file_chooser_button_file_set(GtkWidget *widget, AppData *data);
 
 #endif /* GRAPHICS_H_ */

@@ -70,7 +70,7 @@
 									<listOptionValue builtIn="false" value="cairo"/>
 									<listOptionValue builtIn="false" value="m"/>
 								</option>
-								<option id="gnu.c.link.option.ldflags.1894672297" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-rdynamic" valueType="string"/>
+								<option id="gnu.c.link.option.ldflags.1894672297" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.968207144" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -158,6 +158,7 @@
 									<listOptionValue builtIn="false" value="cairo"/>
 									<listOptionValue builtIn="false" value="m"/>
 								</option>
+								<option id="gnu.c.link.option.ldflags.281824999" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1317259176" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
